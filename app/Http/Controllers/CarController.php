@@ -52,7 +52,9 @@ class CarController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        // dd($request);
         // Validasi data input
+
         $validatedData = $request->validate([
             'brand' => 'required|string|max:255',
             'model' => 'required|string|max:255',
@@ -60,6 +62,8 @@ class CarController extends Controller
             'rental_price_per_day' => 'required|numeric|min:0',
             'is_available' => 'boolean',
         ]);
+
+        // dd($validatedData);
 
         // Tambahkan data ke database
         $car = Car::create([
