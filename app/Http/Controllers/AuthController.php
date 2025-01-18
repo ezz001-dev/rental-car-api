@@ -40,6 +40,9 @@ class AuthController extends Controller
 
     public function registerAdmin(Request $request)
     {
+
+
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
@@ -49,9 +52,13 @@ class AuthController extends Controller
             'sim_number' => 'nullable|string|max:20',
         ]);
 
+
+
         if ($validator->fails()) {
             return response()->json($validator->errors(), 422);
         }
+
+        // dd($request);
 
         $user = User::create([
             'name' => $request->name,
@@ -69,6 +76,32 @@ class AuthController extends Controller
             'access_token' => $token,
             'token_type' => 'Bearer',
         ]);
+    }
+
+
+    public function login(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        // Cari pengguna berdasarkan email
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json(['message' => 'Invalid email or password'], 401);
+        }
+
+        // Buat token untuk pengguna
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Login successful',
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'user' => $user,
+        ], 200);
     }
 
 
