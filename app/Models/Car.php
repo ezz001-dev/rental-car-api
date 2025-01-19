@@ -17,4 +17,9 @@ class Car extends Model
         'rental_price_per_day',
         'is_available',
     ];
+
+    public function rentals()
+    {
+        return $this->hasMany(Rental::class);
+    }
 }
