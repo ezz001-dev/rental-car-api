@@ -39,7 +39,7 @@ class CarController extends Controller
                 $query->where('model', 'LIKE', "%{$model}%");
             })
             ->when(!is_null($available), function ($query) use ($available) {
-                $query->where('available', filter_var($available, FILTER_VALIDATE_BOOLEAN));
+                $query->where('is_available', filter_var($available, FILTER_VALIDATE_BOOLEAN));
             })
             ->get();
 
