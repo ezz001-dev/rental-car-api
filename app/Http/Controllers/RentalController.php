@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
+
 use App\Models\Car;
 use App\Models\Rental;
 use Illuminate\Http\Request;
@@ -20,14 +22,26 @@ class RentalController extends Controller
             'end_date' => 'required|date|after_or_equal:start_date',
         ]);
 
+        $validatedData['start_date'] = Carbon::parse($request->start_date)->toDateTimeString();
+        $validatedData['end_date'] = Carbon::parse($request->end_date)->toDateTimeString();
+
+        $startDate = Carbon::parse($validatedData['start_date']);
+        $endDate = Carbon::parse($validatedData['end_date']);
+        $days = $startDate->diffInDays($endDate);
+
+
+
         // Periksa ketersediaan mobil
         $car = Car::findOrFail($validatedData['car_id']);
-        if (!$car->available) {
+        if (!$car->is_available) {
             return response()->json([
                 'success' => false,
                 'message' => 'Mobil tidak tersedia untuk disewa.',
             ], 400);
         }
+
+        // Hitung total harga (harga per hari * jumlah hari)
+        $totalPrice = $car->rental_price_per_day * $days;
 
         // Periksa apakah mobil sudah dipesan pada tanggal yang diminta
         $isCarBooked = Rental::where('car_id', $car->id)
@@ -63,4 +77,41 @@ class RentalController extends Controller
             'data' => $rental,
         ]);
     }
+
+
+    public function userRentals(Request $request)
+    {
+        // Dapatkan pengguna yang sedang login
+        $user = $request->user();
+
+        // dd($user);
+
+        // Ambil data rental yang terkait dengan pengguna tersebut
+        $rentals = Rental::with('car') // Include informasi mobil
+            ->where('user_id', $user->id)
+            ->whereNull('return_date') // Hanya yang belum dikembalikan
+            ->get();
+
+         // Tambahkan informasi jumlah hari peminjaman dan biaya total secara dinamis
+        $rentals = $rentals->map(function ($rental) {
+        // Hitung jumlah hari peminjaman dari start_date ke end_date
+        $daysRented = \Carbon\Carbon::parse($rental->start_date)
+            ->diffInDays(\Carbon\Carbon::parse($rental->end_date));
+
+        // Tambahkan properti dinamis
+        $rental->days_rented = $daysRented;
+        $rental->total_cost = $daysRented * $rental->car->rental_price_per_day;
+
+        return $rental;
+        });
+
+
+        // Kembalikan daftar rental sebagai JSON
+        return response()->json([
+            'message' => 'Daftar mobil yang sedang disewa.',
+            'rentals' => $rentals,
+        ], 200);
+    }
+
+
 }
