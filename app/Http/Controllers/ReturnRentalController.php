@@ -20,6 +20,8 @@ class ReturnRentalController extends Controller
             'car_plate' => 'required|string|exists:cars,license_plate',
         ]);
 
+        // return $request;
+
         // Cari rental berdasarkan mobil dan pengguna
         $car = Car::where('license_plate', $request->car_plate)->first();
         $rental = Rental::where('car_id', $car->id)
