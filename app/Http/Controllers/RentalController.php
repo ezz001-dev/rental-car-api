@@ -17,7 +17,6 @@ class RentalController extends Controller
         // Validasi input
         $validatedData = $request->validate([
             'car_id' => 'required|exists:cars,id',
-            'user_id' => 'required|exists:users,id',
             'start_date' => 'required|date|after_or_equal:today',
             'end_date' => 'required|date|after_or_equal:start_date',
         ]);
@@ -28,6 +27,8 @@ class RentalController extends Controller
         $startDate = Carbon::parse($validatedData['start_date']);
         $endDate = Carbon::parse($validatedData['end_date']);
         $days = $startDate->diffInDays($endDate);
+
+        $user = $request->user();
 
 
 
@@ -63,7 +64,7 @@ class RentalController extends Controller
         // Buat peminjaman baru
         $rental = Rental::create([
             'car_id' => $validatedData['car_id'],
-            'user_id' => $validatedData['user_id'],
+            'user_id' => $user->id,
             'start_date' => $validatedData['start_date'],
             'end_date' => $validatedData['end_date'],
         ]);
